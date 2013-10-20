@@ -19,6 +19,6 @@
 // The underlying `git_remote` object.
 - (git_remote *)git_remote __attribute__((objc_returns_inner_pointer));
 
-+ (NSMutableDictionary *)loadRemote:(GTRepository *)repository username:(NSString *)username password:(NSString *)password url:(NSString *)repoUrl;
++ (NSMutableDictionary *)loadRemote:(GTRepository *)repository url:(NSString *)repoUrl;
 
 @end

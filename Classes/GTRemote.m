@@ -39,7 +39,7 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 	return self.name.hash ^ self.URLString.hash;
 }
 
-+ (NSMutableDictionary *)loadRemote:(GTRepository *)repository username:(NSString *)username password:(NSString *)password url:(NSString *)repoUrl{
++ (NSMutableDictionary *)loadRemote:(GTRepository *)repository url:(NSString *)repoUrl{
 	
 	NSMutableDictionary *response = [NSMutableDictionary dictionary];
 	
@@ -51,13 +51,8 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 		NSLog(@"loaindg remote");
 	}
 	else{
-		NSString *storedRepoUrl = repoUrl;
-		storedRepoUrl = [storedRepoUrl stringByReplacingOccurrencesOfString:@"https://" withString:@""];
-		storedRepoUrl = [storedRepoUrl stringByReplacingOccurrencesOfString:@"http://" withString:@""];
-		storedRepoUrl = [storedRepoUrl stringByReplacingOccurrencesOfString:@"git@github.com:" withString:@"github.com/"];
-		NSString *repUrl = [NSString stringWithFormat:@"https://%@:%@@%@",[GTRemote urlEncodeUsingEncoding:username encoding:NSUTF8StringEncoding],[GTRemote urlEncodeUsingEncoding:password encoding:NSUTF8StringEncoding],storedRepoUrl];
 		
-		git_remote_create(&remote,repository.git_repository, "github-mixture", [repUrl UTF8String]);
+		git_remote_create(&remote,repository.git_repository, "github-mixture", [repoUrl UTF8String]);
 	
 	}
 	
@@ -123,13 +118,6 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 	
 }
 
-+(NSString *)urlEncodeUsingEncoding:(NSString *)input encoding:(NSStringEncoding)encoding {
-	return (__bridge NSString *)CFURLCreateStringByAddingPercentEscapes(NULL,
-																		(__bridge CFStringRef)input,
-																		NULL,
-																		(CFStringRef)@"!*'\"();:@&=+$,/?%#[]% ",
-																		CFStringConvertNSStringEncodingToEncoding(encoding));
-}
 
 
 #pragma mark API

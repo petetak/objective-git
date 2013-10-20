@@ -117,6 +117,7 @@
 // Returns YES if successful, NO otherwise.
 - (BOOL)addFile:(NSString *)file error:(NSError **)error;
 
+- (BOOL)removeFile:(NSString *)file error:(NSError **)error;
 // Write the index to the repository.
 // Will fail if the receiver's repository is nil.
 //

@@ -7,6 +7,7 @@
 //
 
 #import "git2.h"
+#import "GTRepository.h"
 
 @interface GTRemote : NSObject
 
@@ -17,5 +18,7 @@
 
 // The underlying `git_remote` object.
 - (git_remote *)git_remote __attribute__((objc_returns_inner_pointer));
+
++ (NSMutableDictionary *)loadRemote:(GTRepository *)repository username:(NSString *)username password:(NSString *)password url:(NSString *)repoUrl;
 
 @end

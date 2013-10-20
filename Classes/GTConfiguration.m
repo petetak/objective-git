@@ -137,6 +137,7 @@ static int configCallback(const git_config_entry *entry, void *payload) {
 	return remotes;
 }
 
+
 #pragma mark Refresh
 
 - (BOOL)refresh:(NSError **)error {

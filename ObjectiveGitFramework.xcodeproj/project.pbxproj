@@ -1773,6 +1773,11 @@
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
 				GCC_PREFIX_HEADER = ObjectiveGitFramework_Prefix.pch;
+				HEADER_SEARCH_PATHS = (
+					External/libgit2/include,
+					External/libssh2/include,
+					/usr/local/include,
+				);
 				INFOPLIST_FILE = Info.plist;
 				OTHER_LDFLAGS = (
 					"-lgit2",
@@ -1795,6 +1800,11 @@
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
 				GCC_PREFIX_HEADER = ObjectiveGitFramework_Prefix.pch;
+				HEADER_SEARCH_PATHS = (
+					External/libgit2/include,
+					External/libssh2/include,
+					/usr/local/include,
+				);
 				INFOPLIST_FILE = Info.plist;
 				OTHER_LDFLAGS = (
 					"-lgit2",
@@ -1976,6 +1986,11 @@
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
 				GCC_PREFIX_HEADER = ObjectiveGitFramework_Prefix.pch;
+				HEADER_SEARCH_PATHS = (
+					External/libgit2/include,
+					External/libssh2/include,
+					/usr/local/include,
+				);
 				INFOPLIST_FILE = Info.plist;
 				OTHER_LDFLAGS = (
 					"-lgit2",

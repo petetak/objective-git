@@ -47,71 +47,87 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 	int error = 0;
 
 	if (git_remote_load(&remote, repository.git_repository, "github-mixture") == 0) {
-		
-		NSLog(@"loaindg remote");
+		NSLog(@"loading remote");
+		//git_remote_remove_refspec(<#git_remote *remote#>, <#size_t n#>)
 	}
 	else{
-		
-		git_remote_create(&remote,repository.git_repository, "github-mixture", [repoUrl UTF8String]);
-	
+		error = git_remote_create(&remote,repository.git_repository, "github-mixture", [repoUrl UTF8String]);
 	}
-	
-	git_remote_connect(remote, GIT_DIRECTION_PUSH);
-	git_push *gitPush = NULL;
+		
 	
 	
-	
-	
-	error = git_push_new(&gitPush, remote);
 	if(error){
-		git_push_free(gitPush);
+		
 		git_remote_free(remote);
-		response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github" forKey:@"Error"];
+		response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github - cannot create remote" forKey:@"Error"];
 	}
 	else{
-		error = git_push_add_refspec(gitPush, "+refs/heads/gh-pages");
+	
+		error = git_remote_connect(remote, GIT_DIRECTION_PUSH);
 		if(error){
-			git_push_free(gitPush);
+			
 			git_remote_free(remote);
-			response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github" forKey:@"Error"];
+			response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github - cannot connect to remote" forKey:@"Error"];
 		}
 		else{
-			error = git_push_finish(gitPush);
+		
+			git_push *gitPush = NULL;
+			
+			
+			
+			
+			error = git_push_new(&gitPush, remote);
 			if(error){
 				git_push_free(gitPush);
 				git_remote_free(remote);
-				response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github" forKey:@"Error"];
+				response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github - cannot push to remote" forKey:@"Error"];
 			}
 			else{
-				if(!git_push_unpack_ok(gitPush)){
-					
+				error = git_push_add_refspec(gitPush, "+refs/heads/gh-pages");
+				if(error){
 					git_push_free(gitPush);
 					git_remote_free(remote);
-					response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github" forKey:@"Error"];
+					response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github - cannot add refspec" forKey:@"Error"];
 				}
 				else{
-					void *payload = NULL;
-					error = git_push_status_foreach(gitPush, &rugged__push_status_cb, (void *)payload);
-												if(error){
-													git_push_free(gitPush);
-													git_remote_free(remote);
-													response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github" forKey:@"Error"];
-												}
-												else{
-					error = git_push_update_tips(gitPush);
-												}
+					error = git_push_finish(gitPush);
 					if(error){
-						response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github" forKey:@"Error"];
+						git_push_free(gitPush);
+						git_remote_free(remote);
+						response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github - cannot finish push" forKey:@"Error"];
 					}
-					git_push_free(gitPush);
-					git_remote_free(remote);
+					else{
+						if(!git_push_unpack_ok(gitPush)){
+							
+							git_push_free(gitPush);
+							git_remote_free(remote);
+							response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github" forKey:@"Error"];
+						}
+						else{
+							void *payload = NULL;
+							error = git_push_status_foreach(gitPush, &rugged__push_status_cb, (void *)payload);
+														if(error){
+															git_push_free(gitPush);
+															git_remote_free(remote);
+															response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github" forKey:@"Error"];
+														}
+														else{
+							error = git_push_update_tips(gitPush);
+														}
+							if(error){
+								response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github - cannot update tips" forKey:@"Error"];
+							}
+							git_push_free(gitPush);
+							git_remote_free(remote);
+							
+						}
+					}
 					
 				}
-			}
+				
 			
+			}
 		}
-		
-	
 	}
 	return response;
 	

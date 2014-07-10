@@ -12,21 +12,28 @@
 @implementation GTDiffFile
 
 - (instancetype)initWithGitDiffFile:(git_diff_file)file {
+	NSParameterAssert(file.path != NULL);
+
 	self = [super init];
 	if (self == nil) return nil;
-	
+
+	_path = @(file.path);
+	if (_path == nil) return nil;
+
 	_git_diff_file = file;
-	
 	_size = (NSUInteger)file.size;
 	_flags = (GTDiffFileFlag)file.flags;
 	_mode = file.mode;
-	_path = [NSString stringWithUTF8String:file.path];
-	
+
 	return self;
 }
 
+- (NSString *)debugDescription {
+	return [NSString stringWithFormat:@"%@ path: %@, size: %ld, mode: %u, flags: %u", super.debugDescription, self.path, (unsigned long)self.size, self.mode, self.flags];
+}
+
 - (GTOID *)OID {
-	return [[GTOID alloc] initWithGitOid:&_git_diff_file.oid];
+	return [[GTOID alloc] initWithGitOid:&_git_diff_file.id];
 }
 
 @end

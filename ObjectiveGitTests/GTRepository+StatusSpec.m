@@ -26,9 +26,8 @@ describe(@"Checking status", ^{
 		GTIndex *index = [repository indexWithError:&err];
 		expect(err).to.beNil();
 		expect(index).toNot.beNil();
-		
-		expect(git_index_update_all(index.git_index, NULL, NULL, NULL)).to.equal(GIT_OK);
-		
+		expect([index updatePathspecs:NULL error:NULL passingTest:NULL]).to.beTruthy();
+
 		NSDictionary *renamedOptions = @{ GTRepositoryStatusOptionsFlagsKey: @(GTRepositoryStatusFlagsIncludeIgnored | GTRepositoryStatusFlagsIncludeUntracked | GTRepositoryStatusFlagsRecurseUntrackedDirectories | GTRepositoryStatusFlagsRenamesHeadToIndex) };
 		expect([repository enumerateFileStatusWithOptions:renamedOptions error:&err usingBlock:^(GTStatusDelta *headToIndex, GTStatusDelta *indexToWorkingDirectory, BOOL *stop) {
 			if (![headToIndex.newFile.path isEqualToString:subpath]) return;
@@ -52,35 +51,35 @@ describe(@"Checking status", ^{
 		updateIndexForSubpathAndExpectStatus(subpath, status);
 	};
 	
-	it(@"should recognise untracked files", ^{
+	it(@"should recognize untracked files", ^{
 		expectSubpathToHaveWorkDirStatus(@"UntrackedImage.png", GTStatusDeltaStatusUntracked);
 	});
 	
-	it(@"should recognise added files", ^{
+	it(@"should recognize added files", ^{
 		updateIndexForSubpathAndExpectStatus(@"UntrackedImage.png", GTStatusDeltaStatusAdded);
 	});
 	
-	it(@"should recognise modified files", ^{
+	it(@"should recognize modified files", ^{
 		expect([NSFileManager.defaultManager removeItemAtURL:targetFileURL error:&err]).to.beTruthy();
 		expect(err).to.beNil();
 		expect([testData writeToURL:targetFileURL atomically:YES]).to.beTruthy();
 		expectSubpathToHaveMatchingStatus(targetFileURL.lastPathComponent, GTStatusDeltaStatusModified);
 	});
 		
-	it(@"should recognise copied files", ^{
+	it(@"should recognize copied files", ^{
 		NSURL *copyLocation = [repository.fileURL URLByAppendingPathComponent:@"main2.m"];
 		expect([NSFileManager.defaultManager copyItemAtURL:targetFileURL toURL:copyLocation error:&err]).to.beTruthy();
 		expect(err).to.beNil();
 		updateIndexForSubpathAndExpectStatus(copyLocation.lastPathComponent, GTStatusDeltaStatusCopied);
 	});
 	
-	it(@"should recognise deleted files", ^{
+	it(@"should recognize deleted files", ^{
 		expect([NSFileManager.defaultManager removeItemAtURL:targetFileURL error:&err]).to.beTruthy();
 		expect(err).to.beNil();
 		expectSubpathToHaveMatchingStatus(targetFileURL.lastPathComponent, GTStatusDeltaStatusDeleted);
 	});
 	
-	it(@"should recognise renamed files", ^{
+	it(@"should recognize renamed files", ^{
 		NSURL *moveLocation = [repository.fileURL URLByAppendingPathComponent:@"main-moved.m"];
 		expect([NSFileManager.defaultManager moveItemAtURL:targetFileURL toURL:moveLocation error:&err]).to.beTruthy();
 		expect(err).to.beNil();
@@ -100,6 +99,10 @@ describe(@"Checking status", ^{
 		expect(enumerationSuccessful).to.beTruthy();
 		expect(err).to.beNil();
 	});
+});
+
+afterEach(^{
+	[self tearDown];
 });
 
 SpecEnd

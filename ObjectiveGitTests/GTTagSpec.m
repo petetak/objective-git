@@ -16,7 +16,7 @@ beforeEach(^{
 	NSError *error = nil;
 	GTRepository *repo = self.bareFixtureRepository;
 	NSString *tagSHA = @"0c37a5391bbff43c37f0d0371823a5509eed5b1d";
-	tag = (GTTag *)[repo lookupObjectBySHA:tagSHA error:&error];
+	tag = (GTTag *)[repo lookUpObjectBySHA:tagSHA error:&error];
 	expect(error).to.beFalsy();
 	expect(tag).to.beTruthy();
 	expect(tagSHA).to.equal(tag.SHA);
@@ -33,6 +33,10 @@ it(@"can read tag data", ^{
 	expect(signature.name).to.equal(@"Scott Chacon");
 	expect((int)[signature.time timeIntervalSince1970]).to.equal(1288114383);
 	expect(signature.email).to.equal(@"schacon@gmail.com");
+});
+
+afterEach(^{
+	[self tearDown];
 });
 
 SpecEnd

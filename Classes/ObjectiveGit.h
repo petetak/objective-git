@@ -29,13 +29,17 @@
 #import <ObjectiveGit/GTRepository+Stashing.h>
 #import <ObjectiveGit/GTRepository+Committing.h>
 #import <ObjectiveGit/GTRepository+Status.h>
+#import <ObjectiveGit/GTRepository+Reset.h>
 #import <ObjectiveGit/GTEnumerator.h>
 #import <ObjectiveGit/GTCommit.h>
+#import <ObjectiveGit/GTCredential.h>
 #import <ObjectiveGit/GTSignature.h>
 #import <ObjectiveGit/GTTree.h>
 #import <ObjectiveGit/GTTreeEntry.h>
 #import <ObjectiveGit/GTTreeBuilder.h>
 #import <ObjectiveGit/GTBlob.h>
+#import <ObjectiveGit/GTBlame.h>
+#import <ObjectiveGit/GTBlameHunk.h>
 #import <ObjectiveGit/GTTag.h>
 #import <ObjectiveGit/GTIndex.h>
 #import <ObjectiveGit/GTIndexEntry.h>
@@ -49,6 +53,10 @@
 #import <ObjectiveGit/GTOID.h>
 #import <ObjectiveGit/GTSubmodule.h>
 #import <ObjectiveGit/GTStatusDelta.h>
+#import <ObjectiveGit/GTRepository+Blame.h>
+#import <ObjectiveGit/GTFilter.h>
+#import <ObjectiveGit/GTFilterList.h>
+#import <ObjectiveGit/GTFilterSource.h>
 
 #import <ObjectiveGit/GTObjectDatabase.h>
 #import <ObjectiveGit/GTOdbObject.h>
@@ -63,3 +71,4 @@
 #import <ObjectiveGit/GTDiffFile.h>
 #import <ObjectiveGit/GTDiffHunk.h>
 #import <ObjectiveGit/GTDiffLine.h>
+#import <ObjectiveGit/GTDiffPatch.h>

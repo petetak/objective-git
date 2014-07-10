@@ -10,6 +10,26 @@
 
 @class GTStatusDelta;
 
+// An enum representing the status of a file
+// See git_status_t
+typedef enum {
+	GTFileStatusCurrent = GIT_STATUS_CURRENT,
+
+	GTFileStatusNewInIndex         = GIT_STATUS_INDEX_NEW,
+	GTFileStatusModifiedInIndex    = GIT_STATUS_INDEX_MODIFIED,
+	GTFileStatusDeletedInIndex     = GIT_STATUS_INDEX_DELETED,
+	GTFileStatusRenamedInIndex     = GIT_STATUS_INDEX_RENAMED,
+	GTFileStatusTypeChangedInIndex = GIT_STATUS_INDEX_TYPECHANGE,
+
+	GTFileStatusNewInWorktree         = GIT_STATUS_WT_NEW,
+	GTFileStatusModifiedInWorktree    = GIT_STATUS_WT_MODIFIED,
+	GTFileStatusDeletedInWorktree     = GIT_STATUS_WT_DELETED,
+	GTFileStatusTypeChangedInWorktree = GIT_STATUS_WT_TYPECHANGE,
+	GTFileStatusRenamedInWorktree     = GIT_STATUS_WT_RENAMED,
+
+	GTFileStatusIgnored = GIT_STATUS_IGNORED,
+} GTFileStatusFlags;
+
 // An `NSNumber` wrapped `GTRepositoryStatusOptionsShow` bitmask.
 //
 // For extending the reporting of status. Using the flags documented below this
@@ -44,6 +64,7 @@ typedef enum {
 	GTRepositoryStatusFlagsRecurseIgnoredDirectories = GIT_STATUS_OPT_RECURSE_IGNORED_DIRS,
 	GTRepositoryStatusFlagsRenamesHeadToIndex = GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX,
 	GTRepositoryStatusFlagsRenamesIndexToWorkingDirectory = GIT_STATUS_OPT_RENAMES_INDEX_TO_WORKDIR,
+	GTRepositoryStatusFlagsRenamesFromRewrites = GIT_STATUS_OPT_RENAMES_FROM_REWRITES,
 	GTRepositoryStatusFlagsSortCaseSensitively = GIT_STATUS_OPT_SORT_CASE_SENSITIVELY,
 	GTRepositoryStatusFlagsSortCaseInsensitively = GIT_STATUS_OPT_SORT_CASE_INSENSITIVELY,
 } GTRepositoryStatusFlags;
@@ -87,5 +108,11 @@ extern NSString *const GTRepositoryStatusOptionsPathSpecArrayKey;
 // Returns `NO` in case of a failure or `YES` if the enumeration completed
 // successfully.
 - (BOOL)enumerateFileStatusWithOptions:(NSDictionary *)options error:(NSError **)error usingBlock:(void (^)(GTStatusDelta *headToIndex, GTStatusDelta *indexToWorkingDirectory, BOOL *stop))block;
+
+// Query the status of one file
+- (GTFileStatusFlags)statusForFile:(NSString *)filePath success:(BOOL *)success error:(NSError **)error;
+
+// Should the file be considered as ignored ?
+- (BOOL)shouldFileBeIgnored:(NSURL *)fileURL success:(BOOL *)success error:(NSError **)error;
 
 @end

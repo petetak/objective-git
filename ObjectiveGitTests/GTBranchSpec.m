@@ -118,13 +118,98 @@ describe(@"-reloadedBranchWithError:", ^{
 		static NSString * const originalSHA = @"a4bca6b67a5483169963572ee3da563da33712f7";
 		static NSString * const updatedSHA = @"6b0c1c8b8816416089c534e474f4c692a76ac14f";
 		expect([masterBranch targetCommitAndReturnError:NULL].SHA).to.equal(originalSHA);
-		[masterBranch.reference referenceByUpdatingTarget:updatedSHA error:NULL];
+		[masterBranch.reference referenceByUpdatingTarget:updatedSHA committer:nil message:nil error:NULL];
 
 		GTBranch *reloadedBranch = [masterBranch reloadedBranchWithError:NULL];
 		expect(reloadedBranch).notTo.beNil();
 		expect([reloadedBranch targetCommitAndReturnError:NULL].SHA).to.equal(updatedSHA);
 		expect([masterBranch targetCommitAndReturnError:NULL].SHA).to.equal(originalSHA);
 	});
+});
+
+describe(@"-numberOfCommitsWithError:", ^{
+	it(@"should return the count of commits in the branch", ^{
+		NSError *error = nil;
+		NSUInteger commitCount = [masterBranch numberOfCommitsWithError:&error];
+		expect(commitCount).to.equal(164);
+		expect(error).to.beNil();
+	});
+});
+
+describe(@"-trackingBranchWithError:success:", ^{
+	it(@"should return the tracking branch for a local branch that tracks a remote branch", ^{
+		NSError *error = nil;
+		GTBranch *masterBranch = [repository lookUpBranchWithName:@"master" type:GTBranchTypeLocal success:NULL error:&error];
+		expect(masterBranch).notTo.beNil();
+		expect(error).to.beNil();
+
+		BOOL success = NO;
+		GTBranch *trackingBranch = [masterBranch trackingBranchWithError:&error success:&success];
+		expect(trackingBranch).notTo.beNil();
+		expect(success).to.beTruthy();
+		expect(error).to.beNil();
+	});
+
+	it(@"should return nil for a local branch that doesn't track a remote branch", ^{
+		GTOID *OID = [[GTOID alloc] initWithSHA:@"6b0c1c8b8816416089c534e474f4c692a76ac14f"];
+
+		NSError *error = nil;
+		GTReference *otherRef = [repository createReferenceNamed:@"refs/heads/yet-another-branch" fromOID:OID committer:nil message:nil error:&error];
+		expect(otherRef).notTo.beNil();
+		expect(error).to.beNil();
+
+		GTBranch *otherBranch = [GTBranch branchWithReference:otherRef repository:repository];
+		expect(otherBranch).notTo.beNil();
+
+		BOOL success = NO;
+		trackingBranch = [otherBranch trackingBranchWithError:&error success:&success];
+		expect(trackingBranch).to.beNil();
+		expect(success).to.beTruthy();
+		expect(error).to.beNil();
+	});
+
+	it(@"should return itself for a remote branch", ^{
+		NSError *error = nil;
+		GTReference *remoteRef = [GTReference referenceByLookingUpReferencedNamed:@"refs/remotes/origin/master" inRepository:repository error:&error];
+		expect(remoteRef).notTo.beNil();
+		expect(error).to.beNil();
+
+		GTBranch *remoteBranch = [GTBranch branchWithReference:remoteRef repository:repository];
+		expect(remoteBranch).notTo.beNil();
+
+		BOOL success = NO;
+		GTBranch *remoteTrackingBranch = [remoteBranch trackingBranchWithError:&error success:&success];
+		expect(remoteTrackingBranch).to.equal(remoteBranch);
+		expect(success).to.beTruthy();
+		expect(error).to.beNil();
+	});
+});
+
+// TODO: Test branch renaming, branch upstream
+//- (void)testCanRenameBranch {
+//
+//	NSError *error = nil;
+//	GTRepository *repo = [GTRepository repoByOpeningRepositoryInDirectory:[NSURL URLWithString:TEST_REPO_PATH()] error:&error];
+//	STAssertNil(error, [error localizedDescription]);
+//
+//	NSArray *branches = [GTBranch listAllLocalBranchesInRepository:repo error:&error];
+//	STAssertNotNil(branches, [error localizedDescription], nil);
+//	STAssertEquals(2, (int)branches.count, nil);
+//
+//	NSString *newBranchName = [NSString stringWithFormat:@"%@%@", [GTBranch localNamePrefix], @"this_is_the_renamed_branch"];
+//	GTBranch *firstBranch = [branches objectAtIndex:0];
+//	NSString *originalBranchName = firstBranch.name;
+//	BOOL success = [firstBranch.reference setName:newBranchName error:&error];
+//	STAssertTrue(success, [error localizedDescription]);
+//	STAssertEqualObjects(firstBranch.name, newBranchName, nil);
+//
+//	success = [firstBranch.reference setName:originalBranchName error:&error];
+//	STAssertTrue(success, [error localizedDescription]);
+//	STAssertEqualObjects(firstBranch.name, originalBranchName, nil);
+//}
+
+afterEach(^{
+	[self tearDown];
 });
 
 SpecEnd

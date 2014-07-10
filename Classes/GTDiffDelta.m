@@ -8,78 +8,71 @@
 
 #import "GTDiffDelta.h"
 
+#import "GTDiff.h"
 #import "GTDiffFile.h"
-#import "GTDiffHunk.h"
+#import "GTDiffPatch.h"
+#import "NSError+Git.h"
 
 @interface GTDiffDelta ()
-@property (nonatomic, assign, readonly) const git_diff_delta *git_diff_delta;
+
+// The index of this delta within its parent `diff`.
+@property (nonatomic, assign, readonly) NSUInteger deltaIndex;
+
 @end
 
 @implementation GTDiffDelta
 
-- (instancetype)initWithGitPatch:(git_diff_patch *)patch {
-	NSParameterAssert(patch != NULL);
-	
-	self = [super init];
-	if (self == nil) return nil;
-	
-	_git_diff_patch = patch;
-	
-	size_t adds = 0;
-	size_t deletes = 0;
-	size_t contexts = 0;
-	git_diff_patch_line_stats(&contexts, &adds, &deletes, patch);
-	
-	_addedLinesCount = adds;
-	_deletedLinesCount = deletes;
-	_contextLinesCount = contexts;
-	
-	return self;
+#pragma mark Properties
+
+- (git_diff_delta)git_diff_delta {
+	return *(git_diff_get_delta(self.diff.git_diff, self.deltaIndex));
 }
 
-- (void)dealloc {
-	if (_git_diff_patch != NULL) {
-		git_diff_patch_free(_git_diff_patch);
-		_git_diff_patch = NULL;
-	}
-}
-
-#pragma mark - Properties
-
-- (const git_diff_delta *)git_diff_delta {
-	return git_diff_patch_delta(self.git_diff_patch);
-}
-
-- (BOOL)isBinary {
-	return (self.git_diff_delta->flags & GIT_DIFF_FLAG_BINARY) != 0;
+- (GTDiffFileFlag)flags {
+	return (GTDiffFileFlag)self.git_diff_delta.flags;
 }
 
 - (GTDiffFile *)oldFile {
-	return [[GTDiffFile alloc] initWithGitDiffFile:self.git_diff_delta->old_file];
+	return [[GTDiffFile alloc] initWithGitDiffFile:self.git_diff_delta.old_file];
 }
 
 - (GTDiffFile *)newFile {
-	return [[GTDiffFile alloc] initWithGitDiffFile:self.git_diff_delta->new_file];
+	return [[GTDiffFile alloc] initWithGitDiffFile:self.git_diff_delta.new_file];
 }
 
 - (GTDiffDeltaType)type {
-	return (GTDiffDeltaType)self.git_diff_delta->status;
+	return (GTDiffDeltaType)self.git_diff_delta.status;
 }
 
-- (NSUInteger)hunkCount {
-	return git_diff_patch_num_hunks(self.git_diff_patch);
+#pragma mark Lifecycle
+
+- (instancetype)initWithDiff:(GTDiff *)diff deltaIndex:(NSUInteger)deltaIndex {
+	self = [super init];
+	if (self == nil) return nil;
+
+	_diff = diff;
+	_deltaIndex = deltaIndex;
+
+	return self;
 }
 
-- (void)enumerateHunksWithBlock:(void (^)(GTDiffHunk *hunk, BOOL *stop))block {
-	NSParameterAssert(block != nil);
-	
-	for (NSUInteger idx = 0; idx < self.hunkCount; idx ++) {
-		GTDiffHunk *hunk = [[GTDiffHunk alloc] initWithDelta:self hunkIndex:idx];
-		if (hunk == nil) return;
-		BOOL shouldStop = NO;
-		block(hunk, &shouldStop);
-		if (shouldStop) return;
+#pragma mark Patch Generation
+
+- (GTDiffPatch *)generatePatch:(NSError **)error {
+	git_patch *patch = NULL;
+	int gitError = git_patch_from_diff(&patch, self.diff.git_diff, self.deltaIndex);
+	if (gitError != GIT_OK) {
+		if (error != NULL) *error = [NSError git_errorFor:gitError description:@"Patch generation failed for delta %@", self];
+		return nil;
 	}
+
+	return [[GTDiffPatch alloc] initWithGitPatch:patch delta:self];
+}
+
+#pragma mark NSObject
+
+- (NSString *)description {
+	return [NSString stringWithFormat:@"<%@: %p>{ flags: %u, oldFile: %@, newFile: %@ }", self.class, self, (unsigned)self.git_diff_delta.flags, self.oldFile, self.newFile];
 }
 
 @end

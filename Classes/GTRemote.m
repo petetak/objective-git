@@ -8,6 +8,7 @@
 
 #import "GTRemote.h"
 #import "GTRepository.h"
+#import "GTSignature.h"
 
 static int rugged__push_status_cb(const char *ref, const char *msg, void *payload)
 {
@@ -61,19 +62,19 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 }
 
 
-+ (NSMutableDictionary *)loadRemote:(GTRepository *)repository url:(NSString *)repoUrl{
++ (NSMutableDictionary *)loadRemote:(GTRepository *)repo url:(NSString *)repUrl signa:(GTSignature *)signa {
 	
 	NSMutableDictionary *response = [NSMutableDictionary dictionary];
-	
+	const git_signature *sign = [signa git_signature];
 	git_remote *remote = NULL;
 	int error = 0;
 
-	if (git_remote_load(&remote, repository.git_repository, "github-mixture") == 0) {
+	if (git_remote_load(&remote, repo.git_repository, "github-mixture") == 0) {
 		NSLog(@"loading remote");
 		//git_remote_remove_refspec(<#git_remote *remote#>, <#size_t n#>)
 	}
 	else{
-		error = git_remote_create(&remote,repository.git_repository, "github-mixture", [repoUrl UTF8String]);
+		error = git_remote_create(&remote,repo.git_repository, "github-mixture", [repUrl UTF8String]);
 	}
 		
 	
@@ -134,7 +135,7 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 															response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github" forKey:@"Error"];
 														}
 														else{
-							error = git_push_update_tips(gitPush);
+							error = git_push_update_tips(gitPush, sign, NULL);
 														}
 							if(error){
 								response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github - cannot update tips" forKey:@"Error"];
@@ -159,7 +160,7 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 
 
 #pragma mark API
-
+/*
 - (id)initWithGitRemote:(git_remote *)remote {
 	self = [super init];
 	if (self == nil) return nil;
@@ -167,7 +168,7 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 	_git_remote = remote;
 
 	return self;
-}
+}*/
 
 #pragma mark Properties
 

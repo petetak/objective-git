@@ -8,6 +8,7 @@
 
 #import "git2.h"
 #import "GTRepository.h"
+#import "GTSignature.h"
 
 // A class representing a remote for a git repository.
 //
@@ -23,7 +24,7 @@
 - (git_remote *)git_remote __attribute__((objc_returns_inner_pointer));
 
 
-+ (NSMutableDictionary *)loadRemote:(GTRepository *)repository url:(NSString *)repoUrl;
++ (NSMutableDictionary *)loadRemote:(GTRepository *)repo url:(NSString *)repUrl signa:(GTSignature *)signa;
 
 // The name of the remote.
 @property (nonatomic, readonly, copy) NSString *name;

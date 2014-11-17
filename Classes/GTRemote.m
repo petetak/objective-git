@@ -19,6 +19,18 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 	return GIT_OK;
 }
 
+const char * username;
+const char * password;
+
+int cred_acquire_cb(git_cred **out,
+					const char * url,
+					const char * username_from_url,
+					unsigned int allowed_types,
+					void * payload)
+{
+	return git_cred_userpass_plaintext_new(out, username, password);
+}
+
 #import "NSError+Git.h"
 #import "NSArray+StringArray.h"
 #import "EXTScope.h"
@@ -33,14 +45,16 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 
 #pragma mark Lifecycle
 
-- (id)initWithGitRemote:(git_remote *)remote {
+- (id)initWithGitRemote:(git_remote *)remote{
 	NSParameterAssert(remote != NULL);
-
+	
 	self = [super init];
 	if (self == nil) return nil;
-
+	
 	_git_remote = remote;
-
+	username = "";
+	password = "";
+	
 	return self;
 }
 
@@ -62,7 +76,10 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 }
 
 
-+ (NSMutableDictionary *)loadRemote:(GTRepository *)repo url:(NSString *)repUrl signa:(GTSignature *)signa {
++ (NSMutableDictionary *)loadRemote:(GTRepository *)repo url:(NSString *)repUrl signa:(GTSignature *)signa username: (NSString *)user password: (NSString *)pass branch: (NSString *)branch  {
+	
+	username = user.UTF8String;
+	password = pass.UTF8String;
 	
 	NSMutableDictionary *response = [NSMutableDictionary dictionary];
 	const git_signature *sign = [signa git_signature];
@@ -76,8 +93,22 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 	else{
 		error = git_remote_create(&remote,repo.git_repository, "github-mixture", [repUrl UTF8String]);
 	}
-		
 	
+	
+	
+	//ensure we have remote branches locally
+	//error = git_remote_fetch(remote, sign, NULL);
+	//NSError *err;
+	//GTRemote *rem = [[GTRemote alloc] initWithGitRemote:remote];
+	//GTReference *headRef = [repo headReferenceWithError:&err];
+	//GTBranch *br = [GTBranch branchWithReference:headRef repository:repo];
+	//error = git_remote_add_push(remote, "+refs/heads/gh-pages");
+	
+	//br = [br reloadedBranchWithError:&err];
+	//NSArray *pete = [rem fetchRefspecs];
+	
+	//NSLog(@"pete %@",pete);
+		
 	
 	if(error){
 		
@@ -85,43 +116,87 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 		response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github - cannot create remote" forKey:@"Error"];
 	}
 	else{
-	
+		//git_cred *git_cred = NULL;
+		git_remote_callbacks callbacks = GIT_REMOTE_CALLBACKS_INIT;
+		callbacks.credentials = cred_acquire_cb;
+		git_remote_set_callbacks(remote, &callbacks);
+		
 		error = git_remote_connect(remote, GIT_DIRECTION_PUSH);
-		if(error){
-			
+		if(error < 0){
+			const git_error *e = giterr_last();
+			NSString *errorMessage = [NSString stringWithUTF8String:e->message];
+			response = [NSMutableDictionary dictionaryWithObject:[NSString stringWithFormat:@"Error pushing to Github: %@",errorMessage] forKey:@"Error"];
 			git_remote_free(remote);
-			response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github - cannot connect to remote" forKey:@"Error"];
 		}
 		else{
-		
+			
+			
+			/* All of the above in one step */
+			/*error = git_remote_fetch(remote, sign, NULL);
+			if(error < 0){
+				const git_error *e = giterr_last();
+				NSString *errorMessage = [NSString stringWithUTF8String:e->message];
+				response = [NSMutableDictionary dictionaryWithObject:[NSString stringWithFormat:@"Error pushing to Github: %@",errorMessage] forKey:@"Error"];
+			}*/
+			
 			git_push *gitPush = NULL;
 			
-			
-			
-			
 			error = git_push_new(&gitPush, remote);
-			if(error){
+			if(error < 0){
+				const git_error *e = giterr_last();
+				NSString *errorMessage = [NSString stringWithUTF8String:e->message];
+				response = [NSMutableDictionary dictionaryWithObject:[NSString stringWithFormat:@"Error pushing to Github: %@",errorMessage] forKey:@"Error"];
 				git_push_free(gitPush);
 				git_remote_free(remote);
-				response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github - cannot push to remote" forKey:@"Error"];
+				
 			}
 			else{
-				error = git_push_add_refspec(gitPush, "+refs/heads/gh-pages");
-				if(error){
+				
+				
+				NSString *refSpec = [NSString stringWithFormat: @"+refs/heads/%@:refs/heads/%@", branch, branch];
+				//NSLog(@"refspec %@",refSpec);
+				//git_strarray fetch_refspecs = {0};
+				//error = git_remote_get_fetch_refspecs(&fetch_refspecs, remote);
+				//git_strarray push_refspecs = {0};
+				//error = git_remote_get_push_refspecs(&push_refspecs, remote);
+				
+				//fetch_refspecs = push_refspecs;
+				
+				/*error = git_remote_add_push(remote, "refs/remotes/github-mixture/dog");
+				if (error < 0) {
+					const git_error *e = giterr_last();
+					printf("Error 1 %d/%d: %s\n", error, e->klass, e->message);
+					
+				}
+				git_strarray push_refspecs = {0};
+				error = git_remote_get_push_refspecs(&push_refspecs, remote);*/
+				error = git_push_add_refspec(gitPush, [refSpec UTF8String]);
+				if(error < 0){
+					const git_error *e = giterr_last();
+					NSString *errorMessage = [NSString stringWithUTF8String:e->message];
+					response = [NSMutableDictionary dictionaryWithObject:[NSString stringWithFormat:@"Error pushing to Github: %@",errorMessage] forKey:@"Error"];
+					
 					git_push_free(gitPush);
 					git_remote_free(remote);
-					response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github - cannot add refspec" forKey:@"Error"];
+					
 				}
 				else{
 					error = git_push_finish(gitPush);
-					if(error){
+					if(error < 0){
+						const git_error *e = giterr_last();
+						NSString *errorMessage = [NSString stringWithUTF8String:e->message];
+						response = [NSMutableDictionary dictionaryWithObject:[NSString stringWithFormat:@"Error pushing to Github: %@",errorMessage] forKey:@"Error"];
 						git_push_free(gitPush);
 						git_remote_free(remote);
-						response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github - cannot finish push" forKey:@"Error"];
+						
 					}
 					else{
 						if(!git_push_unpack_ok(gitPush)){
-							
+							/*if (error < 0) {
+								const git_error *e = giterr_last();
+								printf("Error %d/%d: %s\n", error, e->klass, e->message);
+								
+							}*/
 							git_push_free(gitPush);
 							git_remote_free(remote);
 							response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github" forKey:@"Error"];
@@ -129,19 +204,31 @@ static int rugged__push_status_cb(const char *ref, const char *msg, void *payloa
 						else{
 							void *payload = NULL;
 							error = git_push_status_foreach(gitPush, &rugged__push_status_cb, (void *)payload);
-														if(error){
-															git_push_free(gitPush);
-															git_remote_free(remote);
-															response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github" forKey:@"Error"];
-														}
-														else{
-							error = git_push_update_tips(gitPush, sign, NULL);
-														}
-							if(error){
-								response = [NSMutableDictionary dictionaryWithObject:@"Error pushing to Github - cannot update tips" forKey:@"Error"];
+							if(error < 0){
+								const git_error *e = giterr_last();
+								NSString *errorMessage = [NSString stringWithUTF8String:e->message];
+								response = [NSMutableDictionary dictionaryWithObject:[NSString stringWithFormat:@"Error pushing to Github: %@",errorMessage] forKey:@"Error"];
+								git_push_free(gitPush);
+								git_remote_free(remote);
+								
 							}
-							git_push_free(gitPush);
-							git_remote_free(remote);
+							else{
+								error = git_push_update_tips(gitPush, sign, NULL);
+								if(error < 0){
+									const git_error *e = giterr_last();
+									NSString *errorMessage = [NSString stringWithUTF8String:e->message];
+									response = [NSMutableDictionary dictionaryWithObject:[NSString stringWithFormat:@"Error pushing to Github: %@",errorMessage] forKey:@"Error"];
+									git_push_free(gitPush);
+									git_remote_free(remote);
+								}
+								else{
+									//complete
+									git_push_free(gitPush);
+									git_remote_free(remote);
+								}
+							}
+							
+							
 							
 						}
 					}

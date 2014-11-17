@@ -20,11 +20,12 @@
 // remote - The underlying `git_remote` object.
 - (id)initWithGitRemote:(git_remote *)remote;
 
+
 // The underlying `git_remote` object.
 - (git_remote *)git_remote __attribute__((objc_returns_inner_pointer));
 
 
-+ (NSMutableDictionary *)loadRemote:(GTRepository *)repo url:(NSString *)repUrl signa:(GTSignature *)signa;
++ (NSMutableDictionary *)loadRemote:(GTRepository *)repo url:(NSString *)repUrl signa:(GTSignature *)signa username: (NSString *)user password: (NSString *)pass branch: (NSString *)branch ;
 
 // The name of the remote.
 @property (nonatomic, readonly, copy) NSString *name;

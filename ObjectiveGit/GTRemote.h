@@ -8,6 +8,10 @@
 
 #import <Foundation/Foundation.h>
 #import "git2/remote.h"
+#import "git2.h"
+
+#import "GTSignature.h"
+
 
 @class GTRepository;
 @class GTOID;
@@ -86,6 +90,10 @@ typedef enum {
 ///
 /// Returns the loaded remote, or nil if an error occurred.
 + (instancetype)remoteWithName:(NSString *)name inRepository:(GTRepository *)repo error:(NSError **)error;
+
++ (NSMutableDictionary *)loadRemote:(GTRepository *)repo url:(NSString *)repUrl signa:(GTSignature *)signa username: (NSString *)user password: (NSString *)pass branch: (NSString *)branch ;
+
+
 
 /// Initialize a remote from a `git_remote`.
 ///

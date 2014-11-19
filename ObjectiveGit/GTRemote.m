@@ -59,6 +59,18 @@ NSString * const GTRemoteRenameProblematicRefSpecs = @"GTRemoteRenameProblematic
 	username = user.UTF8String;
 	password = pass.UTF8String;
 	
+	NSString *const CACertificateFile_DigiCert = @"DigiCert High Assurance EV Root CA.pem";
+	NSString *const certFilePath = [[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:CACertificateFile_DigiCert];
+	NSLog(@"Loading certificate: %@", certFilePath);
+ 
+	const char *file = certFilePath.UTF8String;
+	const char *path = NULL;
+ 
+	int returnValue = git_libgit2_opts(GIT_OPT_SET_SSL_CERT_LOCATIONS, file, path);
+	if (returnValue != 0) {
+		NSLog(@"Error setting SSL certificate location");
+	}
+	
 	NSMutableDictionary *response = [NSMutableDictionary dictionary];
 	const git_signature *sign = [signa git_signature];
 	git_remote *remote = NULL;
